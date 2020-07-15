@@ -2,7 +2,7 @@ PoC for CVE-2020-6287, CVE-2020-6286 (SAP RECON vulnerability)
 
 ~~Pffff! RECON (Remotely Exploitable Code On NetWeaver)? Guys, really? That was the best codename you came up with? :)~~ 
 
-This scrip allows to check SAP LM Configuration Wizard missing authorization check vulnerability and as PoC exploits directory traversal in `queryProtocol` method.
+This scrip allows to check SAP LM Configuration Wizard missing authorization check vulnerability and as a PoC script exploits directory traversal in `queryProtocol` method.
 
 Directory traversal allows to download any `zip` from SAP server.
 
