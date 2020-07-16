@@ -31,7 +31,7 @@ def detect_vuln(base_url):
             return {"status":True, "url":base_url + check['path']}
         else:
             print ("%s - %s" %(check['name'], status))
-            return {"status":False, "url":""}
+    return {"status":False, "url":""}
 
 
 def exploit_traversal(url, zipfile):
