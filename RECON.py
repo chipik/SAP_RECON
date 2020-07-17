@@ -11,7 +11,9 @@ import xml.etree.ElementTree as ET
 help_desc = '''
 PoC for CVE-2020-6287, CVE-2020-6286 (RECON)
 This scrip allows to check SAP LM Configuration Wizard missing authorization check vulnerability and exploits dir traversal in queryProtocol method
-Original finding: Pablo Artuso. https://twitter.com/lmkalg
+Original finding: 
+- Pablo Artuso. https://twitter.com/lmkalg
+- Yvan 'iggy' G https://twitter.com/_1ggy
 Solution: https://launchpad.support.sap.com/#/notes/2934135, https://launchpad.support.sap.com/#/notes/2939665
 '''
 

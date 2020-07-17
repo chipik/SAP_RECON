@@ -9,7 +9,10 @@ Directory traversal allows to download any `zip` from SAP server.
 ***This PoC doesn't provide RCE/user creation functionality.<br>This project is created only for educational purposes and cannot be used for law violation or personal gain.
 <br>The author of this project is not responsible for any possible harm caused by the materials of this project***
 
-Original finding: [Pablo Artuso](https://twitter.com/lmkalg)
+Original finding: 
+
+CVE-2020-6287: [Pablo Artuso](https://twitter.com/lmkalg)<br>
+CVE-2020-6286: [Yvan 'iggy' G.](https://twitter.com/_1ggy) 
 
 Solution: [#2934135](https://launchpad.support.sap.com/#/notes/2934135), [#2939665](https://launchpad.support.sap.com/#/notes/2939665)
 
