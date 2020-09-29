@@ -6,7 +6,7 @@ This scrip allows to check SAP LM Configuration Wizard missing authorization che
 
 Directory traversal allows to download any `zip` from SAP server.
 
-***This PoC doesn't provide RCE/user creation functionality.<br>This project is created only for educational purposes and cannot be used for law violation or personal gain.
+***This project is created only for educational purposes and cannot be used for law violation or personal gain.
 <br>The author of this project is not responsible for any possible harm caused by the materials of this project***
 
 Original finding: 
